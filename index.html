@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inside the Transformer — LLM Pipeline Visualizer</title>
+  <meta name="description" content="Step-by-step animated visualizer of the LLM pipeline: tokenization, embeddings, attention, feed-forward, and backpropagation." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+
+  <!-- Progress bar -->
+  <div id="progress-bar-track"><div id="progress-bar-fill"></div></div>
+
+  <!-- Header -->
+  <header id="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-hex">⬡</span>
+        <span>Transformer<span class="logo-accent">Viz</span></span>
+      </div>
+      <div class="header-right">
+        <button id="audio-btn" title="Replay audio narration">
+          <span class="audio-icon">🔊</span>
+          <div class="audio-dot"></div>
+          <span class="audio-label">Replay</span>
+        </button>
+        <div class="step-pill" id="step-pill">Step 1 / 8</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Slide dot nav -->
+  <nav id="dot-nav"></nav>
+
+  <!-- ═══ SLIDES WRAPPER ═══ -->
+  <main id="slides-wrapper">
+
+    <!-- ▓▓▓ SLIDE 1 — TOKENIZATION ▓▓▓ -->
+    <section class="slide" id="slide-1">
+      <div class="slide-inner">
+        <div class="step-badge">Step 01</div>
+        <h2 class="slide-heading">Tokenization</h2>
+        <div class="narration-card" data-slide="0">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">Before a language model can understand your text, it needs to convert it into numbers. This process is called <strong>tokenization</strong> — your sentence is broken into small pieces called tokens, each assigned a unique ID number.</div>
+            <div class="narration-hint">↑ Click to replay audio · Auto-plays when you arrive</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">What is Tokenization?</div>
+            <p>Before the model can process text, it needs to convert words into <span class="hl-orange">numbers</span>. Think of it like a dictionary: every word (or sub-word) gets a unique ID number. The model only understands numbers, never raw text!</p>
+          </div>
+        </div>
+
+        <div class="input-section">
+          <div class="input-label">INPUT TEXT <span class="char-counter"><span id="tok-char-count">0</span>/60</span></div>
+          <input type="text" id="tok-input" class="main-input" placeholder='Try: "Hello transformer"' maxlength="60" autocomplete="off" spellcheck="false" />
+        </div>
+
+        <div class="split-label" id="tok-split-label" style="display:none">↓ split into tokens ↓</div>
+
+        <div class="tokens-display" id="tokens-display"></div>
+
+        <div id="vocab-table-wrap" style="display:none">
+          <div class="section-label">VOCABULARY LOOKUP TABLE <span class="dim">(simplified)</span></div>
+          <div class="vocab-table" id="vocab-table"></div>
+          <div class="vocab-note">GPT uses ~50,000 tokens. <span class="hl-orange">Highlighted</span> = your input tokens.</div>
+        </div>
+
+        <div class="takeaway-box" id="tok-takeaway" style="display:none">
+          <span class="takeaway-arrow">→</span>
+          <span id="tok-takeaway-text">Key takeaway: tokens become numbers. Now the model can do math!</span>
+        </div>
+
+        <div class="theory-box blue-theory" style="margin-top:1rem">
+          <div class="theory-icon">🔑</div>
+          <div>
+            <div class="theory-title">Key Points</div>
+            <ul class="theory-list">
+              <li>Common words = 1 token. Rare words are split into sub-words</li>
+              <li>GPT-4 uses <strong>~100,000</strong> unique token IDs (BPE vocabulary)</li>
+              <li>Spaces and punctuation are often merged into adjacent tokens</li>
+              <li>The same text always maps to the same token sequence</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 2 — EMBEDDINGS ▓▓▓ -->
+    <section class="slide" id="slide-2">
+      <div class="slide-inner">
+        <div class="step-badge">Step 02</div>
+        <h2 class="slide-heading">Embeddings &amp; Positional Encoding</h2>
+        <div class="narration-card" data-slide="1">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">A token ID is just a number with no meaning. An <strong>embedding</strong> converts it into a vector — a list of numbers that capture semantic meaning. Similar words end up with similar vectors. We also add <strong>positional encoding</strong> using sine/cosine waves so the model knows word order.</div>
+            <div class="narration-hint">↑ Click to replay audio</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">What is an Embedding?</div>
+            <p>A token ID (like 7592) is just a number — it has no meaning by itself. An <span class="hl-cyan">embedding</span> converts it into a <span class="hl-cyan">vector</span> (a list of numbers). These numbers capture <em>meaning</em>: similar words end up with similar vectors!</p>
+          </div>
+        </div>
+
+        <div class="embed-pipeline">
+          <div class="ep-box ep-token" id="ep-token-box">
+            <div class="ep-label">TOKEN ID</div>
+            <div class="ep-val" id="ep-token-id">7592</div>
+            <div class="ep-sub" id="ep-token-word">"hi"</div>
+          </div>
+          <div class="ep-arrow">→<br/><span class="ep-arrow-label">lookup<br/>embed table</span></div>
+          <div class="ep-box ep-embed">
+            <div class="ep-label">EMBED TABLE <span class="dim">(50k × 512)</span></div>
+            <div class="embed-grid" id="embed-grid"></div>
+            <div class="ep-sub" id="ep-row-label">row 7592 selected</div>
+          </div>
+          <div class="ep-arrow">→</div>
+          <div class="ep-box ep-vector">
+            <div class="ep-label">EMBEDDING VECTOR <span class="dim">(dim=8)</span></div>
+            <div id="embed-vector-display"></div>
+          </div>
+        </div>
+
+        <div class="embed-bars-section">
+          <div class="section-label" id="embed-bar-label">EMBEDDING VISUALIZED: "<span id="embed-word-label">hi</span>" in 8 dimensions</div>
+          <div class="embed-bars" id="embed-bars"></div>
+          <div class="dim-labels" id="dim-labels"></div>
+          <div class="embed-note">Positive = bar above line, Negative = bar below line. In real GPT, this is 512 bars!</div>
+        </div>
+
+        <div class="pe-section">
+          <div class="section-label">ADDING POSITIONAL ENCODING</div>
+          <div class="theory-box blue-theory" style="margin-bottom:1rem">
+            <div class="theory-icon">📌</div>
+            <div>
+              <div class="theory-title">Why Position Info?</div>
+              <p>Without position info, "dog bites man" and "man bites dog" look identical! We add <span class="hl-cyan">sine/cosine waves</span> at different frequencies — one unique signature per position.</p>
+            </div>
+          </div>
+          <canvas id="pe-canvas" width="700" height="180"></canvas>
+          <div class="pe-addition-row" id="pe-addition-row"></div>
+        </div>
+
+        <div class="analogy-box">
+          <div class="analogy-icon">🌍</div>
+          <div class="analogy-title">REAL-WORLD ANALOGY</div>
+          <p>Think of a world map where cities are placed by how similar they are, not geography. "Dog" and "puppy" are neighbors. "King" and "queen" are very close. An embedding gives every word its GPS coordinates on this meaning-map.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 3 — SELF-ATTENTION ▓▓▓ -->
+    <section class="slide" id="slide-3">
+      <div class="slide-inner">
+        <div class="step-badge">Step 03</div>
+        <h2 class="slide-heading">Self-Attention (Q, K, V)</h2>
+        <div class="narration-card" data-slide="2">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">Self-attention lets every word look at every other word. For each token we create 3 vectors — <strong>Q</strong> (what I'm looking for), <strong>K</strong> (what I have), <strong>V</strong> (my information). Scores are computed as Q·Kᵀ/√d, then softmax gives attention weights — how much each word attends to others.</div>
+            <div class="narration-hint">↑ Click to replay audio</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">What is Self-Attention?</div>
+            <p>Self-attention lets each word look at <span class="hl-orange">all other words</span> and decide how much to "pay attention" to them. Formula: <code class="code-inline">Attention = softmax(QKᵀ / √d_k) · V</code></p>
+            <p style="margin-top:0.5rem">We create 3 copies of each token's vector: <span class="hl-cyan">Q</span> (what am I looking for?), <span class="hl-green">K</span> (what do I have?), <span class="hl-orange">V</span> (what info do I share?).</p>
+          </div>
+        </div>
+
+        <div class="attention-steps">
+          <div class="att-step" id="att-step-1">
+            <div class="att-step-title">STEP 1: Create Q, K, V for each token</div>
+            <div class="qkv-display" id="qkv-display"></div>
+          </div>
+
+          <div class="att-step" id="att-step-2">
+            <div class="att-step-title">STEP 2: Compute Scores — Q · Kᵀ / √d</div>
+            <div class="score-matrix" id="score-matrix"></div>
+          </div>
+
+          <div class="att-step" id="att-step-3">
+            <div class="att-step-title">STEP 3: Apply Softmax → Attention Weights (0 to 1, sum=1)</div>
+            <div class="attention-heatmap-wrap">
+              <canvas id="attention-heatmap" width="500" height="200"></canvas>
+              <div class="heatmap-note">Brighter = more attention. Each row sums to 100%.</div>
+            </div>
+          </div>
+
+          <div class="att-step" id="att-step-4">
+            <div class="att-step-title">STEP 4: Weighted Sum of V Vectors</div>
+            <div class="weighted-sum" id="weighted-sum"></div>
+          </div>
+        </div>
+
+        <div class="analogy-box">
+          <div class="analogy-icon">📚</div>
+          <div class="analogy-title">REAL-WORLD ANALOGY</div>
+          <p>Imagine a study group where every student has a topic card (K), a question card (Q), and notes (V). Each student looks around, checks whose topic matches their question, and borrows a <em>weighted mix</em> of everyone's notes. That's self-attention!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 4 — ADD & NORM ▓▓▓ -->
+    <section class="slide" id="slide-4">
+      <div class="slide-inner">
+        <div class="step-badge">Step 04</div>
+        <h2 class="slide-heading">Add &amp; Norm (Residual Connection)</h2>
+        <div class="narration-card" data-slide="3">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">After attention, we <strong>add</strong> the original input back (residual connection) to prevent information loss and help gradients flow during training. Then <strong>Layer Norm</strong> rescales values to mean=0, std=1 — keeping training stable across hundreds of layers.</div>
+            <div class="narration-hint">↑ Click to replay audio</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">What is Add &amp; Norm?</div>
+            <p>After attention, we do two things:<br/>
+            1. <span class="hl-orange">Add</span>: we add the original input back to the attention output — called a <strong>"residual connection"</strong>. This preserves information and prevents the signal from disappearing.<br/>
+            2. <span class="hl-cyan">Norm</span>: Layer Normalization rescales values to have mean=0 and std=1, keeping training stable.</p>
+          </div>
+        </div>
+
+        <div class="addnorm-layout">
+          <div class="addnorm-flow" id="addnorm-flow">
+            <div class="flow-box flow-input" id="flow-input">Input x<br/><span class="flow-sub">(from embedding + PE)</span></div>
+            <div class="flow-arrow" id="fa-1">↓</div>
+            <div class="flow-box flow-attn" id="flow-attn">Self-Attention</div>
+            <div class="flow-arrow" id="fa-2">↓</div>
+            <div class="flow-box flow-add" id="flow-add">⊕ Add<br/><span class="flow-sub">residual skip</span></div>
+            <div class="flow-arrow" id="fa-3">↓</div>
+            <div class="flow-box flow-norm" id="flow-norm">Layer Norm</div>
+            <div class="flow-arrow" id="fa-4">↓</div>
+            <div class="flow-box flow-output" id="flow-output">Output</div>
+          </div>
+
+          <div class="addnorm-calc">
+            <div class="section-label">STEP BY STEP CALCULATION</div>
+            <div class="calc-row" id="calc-original"></div>
+            <div class="calc-op">+</div>
+            <div class="calc-row" id="calc-attn"></div>
+            <div class="calc-op">=</div>
+            <div class="calc-row" id="calc-added"></div>
+            <div class="calc-note" id="calc-mean-note"></div>
+            <div class="calc-op">→ After Layer Norm:</div>
+            <div class="calc-row" id="calc-normed"></div>
+            <div class="calc-note success-note">mean = 0, std = 1 ✓ Stabilized!</div>
+          </div>
+        </div>
+
+        <div class="theory-box green-theory">
+          <div class="theory-icon">🛤️</div>
+          <div>
+            <div class="theory-title">Why Residual Connections?</div>
+            <p>In deep networks, gradients can <span class="hl-orange">vanish</span> during training. Adding the original input back (skip connection) gives gradients a "highway" to flow through — the same idea as <strong>ResNet</strong> in image recognition.</p>
+          </div>
+        </div>
+
+        <div class="analogy-box">
+          <div class="analogy-icon">🍓</div>
+          <div class="analogy-title">REAL-WORLD ANALOGY</div>
+          <p>Imagine making a smoothie. You blend strawberries, but you also keep some fresh ones on the side. When you're done blending, you add those fresh ones back — ensuring the final smoothie still tastes unmistakably like strawberry. The original word vector is never completely lost!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 5 — FEED FORWARD ▓▓▓ -->
+    <section class="slide" id="slide-5">
+      <div class="slide-inner">
+        <div class="step-badge">Step 05</div>
+        <h2 class="slide-heading">Feed Forward Network</h2>
+        <div class="narration-card" data-slide="4">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">After attention gathers context <em>across</em> tokens, the <strong>Feed Forward Network</strong> processes each token <em>independently</em>. It expands the dimension 4×, applies <strong>ReLU</strong> (zeroing negatives), then compresses back. Most of the model's factual knowledge lives here.</div>
+            <div class="narration-hint">↑ Click to replay audio</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">What is the Feed Forward Layer?</div>
+            <p>After attention gathers context, the Feed Forward Network (FFN) <span class="hl-orange">processes each position independently</span>. It's a 2-layer neural network: first it <strong>expands</strong> the dimension (×4), applies <span class="hl-cyan">ReLU activation</span>, then <strong>compresses</strong> back down.</p>
+            <p style="margin-top:0.4rem">Formula: <code class="code-inline">FFN(x) = max(0, xW₁ + b₁)W₂ + b₂</code></p>
+          </div>
+        </div>
+
+        <div class="ffn-demo">
+          <div class="ffn-network" id="ffn-network">
+            <!-- Input layer -->
+            <div class="nn-layer" id="nn-input-layer">
+              <div class="nn-layer-label">Input<br/><span class="dim">d=4</span></div>
+              <div class="nn-nodes" id="nn-input-nodes"></div>
+            </div>
+            <!-- Hidden layer -->
+            <div class="nn-connections" id="nn-conn-1"></div>
+            <div class="nn-layer" id="nn-hidden-layer">
+              <div class="nn-layer-label">Hidden (ReLU)<br/><span class="dim">d=16</span></div>
+              <div class="nn-nodes" id="nn-hidden-nodes"></div>
+            </div>
+            <!-- Output layer -->
+            <div class="nn-connections" id="nn-conn-2"></div>
+            <div class="nn-layer" id="nn-output-layer">
+              <div class="nn-layer-label">Output<br/><span class="dim">d=4</span></div>
+              <div class="nn-nodes" id="nn-output-nodes"></div>
+            </div>
+          </div>
+
+          <div class="ffn-canvas-wrap">
+            <canvas id="ffn-canvas" width="700" height="300"></canvas>
+          </div>
+        </div>
+
+        <div class="relu-section">
+          <div class="section-label">ReLU ACTIVATION: max(0, x)</div>
+          <canvas id="relu-canvas" width="400" height="160"></canvas>
+          <div class="relu-note">Negative values are <span class="hl-orange">zeroed out</span>. This introduces non-linearity, letting the model learn complex patterns.</div>
+        </div>
+
+        <div class="theory-box blue-theory">
+          <div class="theory-icon">🔑</div>
+          <div>
+            <div class="theory-title">Why FFN After Attention?</div>
+            <ul class="theory-list">
+              <li>Attention mixes information <em>across</em> positions. FFN processes each position <em>independently</em></li>
+              <li>The 4× expansion creates room for richer representations</li>
+              <li>FFN layers hold most of the model's "factual knowledge"</li>
+              <li>In GPT-3: input dim=12288, hidden dim=49152 (4× larger!)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 6 — BACKPROPAGATION ▓▓▓ -->
+    <section class="slide" id="slide-6">
+      <div class="slide-inner">
+        <div class="step-badge">Step 06</div>
+        <h2 class="slide-heading">Backpropagation &amp; Learning</h2>
+        <div class="narration-card" data-slide="5">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text"><strong>Forward pass</strong>: data flows through all layers to produce a prediction. <strong>Backward pass</strong>: we measure the error (loss), then use the chain rule to compute how each weight should change. The optimizer updates all weights slightly. Repeat for billions of tokens — that's training!</div>
+            <div class="narration-hint">↑ Click to replay audio · Use the buttons below to animate</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">How Does the Model Learn?</div>
+            <p>Training has two phases: <span class="hl-orange">Forward pass</span> (compute prediction) and <span class="hl-cyan">Backward pass</span> (compute how wrong we were, then update weights). The backward pass uses the <strong>chain rule of calculus</strong> to propagate the error back through every layer.</p>
+          </div>
+        </div>
+
+        <div class="backprop-demo">
+          <canvas id="backprop-canvas" width="700" height="340"></canvas>
+          <div class="backprop-controls">
+            <button class="bp-btn" id="bp-forward-btn">▶ Run Forward Pass</button>
+            <button class="bp-btn" id="bp-backward-btn" disabled>◀ Run Backward Pass</button>
+            <button class="bp-btn bp-reset" id="bp-reset-btn">↺ Reset</button>
+          </div>
+          <div class="backprop-status" id="backprop-status">Click "Run Forward Pass" to begin training step</div>
+        </div>
+
+        <div class="loss-display" id="loss-display" style="display:none">
+          <div class="loss-row">
+            <span class="loss-label">Predicted Token:</span>
+            <span class="loss-val" id="bp-predicted"></span>
+          </div>
+          <div class="loss-row">
+            <span class="loss-label">Correct Token:</span>
+            <span class="loss-val hl-green" id="bp-correct"></span>
+          </div>
+          <div class="loss-row">
+            <span class="loss-label">Loss (Cross-Entropy):</span>
+            <span class="loss-val hl-orange" id="bp-loss"></span>
+          </div>
+        </div>
+
+        <div class="theory-box blue-theory">
+          <div class="theory-icon">🔑</div>
+          <div>
+            <div class="theory-title">Key Concepts</div>
+            <ul class="theory-list">
+              <li><strong>Loss function</strong>: measures how wrong the prediction is (Cross-Entropy)</li>
+              <li><strong>Gradient</strong>: the direction & size to adjust each weight</li>
+              <li><strong>Learning rate</strong>: how big each weight update step is (e.g. 0.0001)</li>
+              <li><strong>Optimizer</strong>: Adam adjusts learning rates per parameter automatically</li>
+              <li>GPT-3 trained on <strong>300 billion tokens</strong> — billions of these update steps!</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="analogy-box">
+          <div class="analogy-icon">🎯</div>
+          <div class="analogy-title">REAL-WORLD ANALOGY</div>
+          <p>Imagine throwing a ball at a target blindfolded. After each throw, someone tells you how far off you were and in which direction. You adjust your next throw a little. After millions of throws, you get very accurate. Backpropagation is exactly this feedback loop — but for every weight in the network simultaneously.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 7 — CONTEXT & TEMPERATURE ▓▓▓ -->
+    <section class="slide" id="slide-7">
+      <div class="slide-inner">
+        <div class="step-badge">Step 07</div>
+        <h2 class="slide-heading">Context Window &amp; Temperature</h2>
+        <div class="narration-card" data-slide="6">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text"><strong>Context Window</strong> = the model's short-term memory. Tokens beyond it are forgotten. <strong>Temperature</strong> controls creativity: low (0.1) = always picks the most likely word — precise; high (0.9) = samples less likely words — creative. Use the sliders to see how both parameters change model behavior.</div>
+            <div class="narration-hint">↑ Click to replay audio · Interact with sliders</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">💡</div>
+          <div>
+            <div class="theory-title">Developer Controls</div>
+            <p>As an AI application engineer, you control two important knobs that shape how the model behaves. These are set in the API call — not trained into the model.</p>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="ctrl-card">
+            <div class="ctrl-card-header">
+              <span class="ctrl-icon">🧠</span>
+              <div>
+                <div class="ctrl-title">Context Window</div>
+                <div class="ctrl-sub">Short-term memory</div>
+              </div>
+            </div>
+            <div class="context-tokens" id="context-tokens"></div>
+            <div class="slider-row">
+              <input type="range" id="ctx-slider" min="4" max="24" value="12" class="styled-slider" />
+              <div class="slider-ends"><span>Short</span><span>Long</span></div>
+            </div>
+            <div class="ctrl-note">Tokens beyond the window are <span class="hl-orange">forgotten</span>. GPT-4 supports 128k tokens!</div>
+            <div class="theory-box blue-theory" style="margin-top:0.75rem;font-size:0.8rem">
+              <div class="theory-icon" style="font-size:1rem">📖</div>
+              <div>Once the conversation exceeds the context window, the model cannot "see" earlier messages. This is why very long chats sometimes lose track of early instructions.</div>
+            </div>
+          </div>
+
+          <div class="ctrl-card">
+            <div class="ctrl-card-header">
+              <span class="ctrl-icon">🌡️</span>
+              <div>
+                <div class="ctrl-title">Temperature</div>
+                <div class="ctrl-sub">Creativity vs. precision</div>
+              </div>
+            </div>
+            <div class="temp-words" id="temp-words"></div>
+            <div class="slider-row">
+              <input type="range" id="temp-slider" min="0" max="100" value="50" class="styled-slider temp-gradient" />
+              <div class="temp-labels"><span>0.0<br/>🧊 Precise</span><span id="temp-val-display">0.5</span><span>1.0<br/>🔥 Creative</span></div>
+            </div>
+            <div class="prob-bars-section">
+              <div class="section-label" style="margin-bottom:0.5rem">TOKEN PROBABILITIES</div>
+              <div id="prob-bars"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓ SLIDE 8 — FULL PIPELINE SUMMARY ▓▓▓ -->
+    <section class="slide" id="slide-8">
+      <div class="slide-inner">
+        <div class="step-badge">Complete ✓</div>
+        <h2 class="slide-heading">The Complete Pipeline</h2>
+        <div class="narration-card" data-slide="7">
+          <span class="narration-wave">🔊</span>
+          <div>
+            <div class="narration-text">You now understand the full LLM pipeline: <strong>Tokenize → Embed → Attend → Add & Norm → Feed Forward → Softmax → Next Token</strong>. This cycle repeats one token at a time to generate a complete response. Watch the animation below to see data flowing through every stage.</div>
+            <div class="narration-hint">↑ Click to replay audio</div>
+          </div>
+        </div>
+
+        <div class="theory-box orange-theory">
+          <div class="theory-icon">🎉</div>
+          <div>
+            <div class="theory-title">You've seen it all!</div>
+            <p>From your keypress to the model's generated response — here is the complete picture of what happens inside every LLM, every single time you send a message.</p>
+          </div>
+        </div>
+
+        <canvas id="pipeline-summary-canvas" width="700" height="260"></canvas>
+
+        <div class="summary-steps">
+          <div class="sum-step" style="--c:#e8630a">
+            <div class="sum-num">01</div>
+            <div class="sum-label">Tokenization</div>
+            <div class="sum-desc">Text → token IDs</div>
+          </div>
+          <div class="sum-arrow">→</div>
+          <div class="sum-step" style="--c:#00bcd4">
+            <div class="sum-num">02</div>
+            <div class="sum-label">Embeddings</div>
+            <div class="sum-desc">IDs → meaning vectors</div>
+          </div>
+          <div class="sum-arrow">→</div>
+          <div class="sum-step" style="--c:#7c4dff">
+            <div class="sum-num">03</div>
+            <div class="sum-label">Attention</div>
+            <div class="sum-desc">Q, K, V → context</div>
+          </div>
+          <div class="sum-arrow">→</div>
+          <div class="sum-step" style="--c:#4caf50">
+            <div class="sum-num">04</div>
+            <div class="sum-label">Add &amp; Norm</div>
+            <div class="sum-desc">Residual + normalize</div>
+          </div>
+          <div class="sum-arrow">→</div>
+          <div class="sum-step" style="--c:#ff6b6b">
+            <div class="sum-num">05</div>
+            <div class="sum-label">Feed Forward</div>
+            <div class="sum-desc">Per-position MLP</div>
+          </div>
+          <div class="sum-arrow">→</div>
+          <div class="sum-step" style="--c:#ffc107">
+            <div class="sum-num">06</div>
+            <div class="sum-label">Softmax</div>
+            <div class="sum-desc">Logits → next token</div>
+          </div>
+        </div>
+
+        <div class="quote-block">
+          <span class="quote-mark">"</span>
+          We live on the home side, not the power plant side. But knowing how electricity is made helps us build better appliances on top of it.
+          <span class="quote-mark">"</span>
+        </div>
+
+        <div class="restart-row">
+          <button class="restart-btn" id="restart-btn">↺ Start Over</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation -->
+  <div id="nav-bar">
+    <button class="nav-btn" id="prev-btn" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="nav-center">
+      <div class="nav-slide-name" id="nav-slide-name">Tokenization</div>
+      <div class="nav-keys"><kbd>←</kbd> <kbd>→</kbd> to navigate</div>
+    </div>
+    <button class="nav-btn" id="next-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
