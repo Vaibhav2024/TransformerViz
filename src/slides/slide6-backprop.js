@@ -105,10 +105,9 @@ function clearTimers() {
    ══════════════════════════════════════════════════════ */
 function startForward() {
   clearTimers();
+  resetState();
   phase     = 'forward';
   lossShown = false;
-  resetState();
-  pulses = [];
   cancelAnimationFrame(raf);
   updateButtons();
   setStatus('→ Forward pass: activating each layer in sequence…');
