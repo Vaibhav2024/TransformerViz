@@ -83,15 +83,6 @@ function init() {
       getIsSpeaking() ? stop() : replaySlide(current);
     }
   });
-
-  // Touch swipe
-  let ty0 = 0, tx0 = 0;
-  document.addEventListener('touchstart', e => { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; }, { passive: true });
-  document.addEventListener('touchend',   e => {
-    const dy = ty0 - e.changedTouches[0].clientY;
-    const dx = tx0 - e.changedTouches[0].clientX;
-    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 45) navigate(dy > 0 ? 1 : -1);
-  }, { passive: true });
 }
 
 function buildDotNav() {

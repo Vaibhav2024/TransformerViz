@@ -138,21 +138,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(currentIndex - 1);
 });
 
-// Touch/swipe support
-let touchStartY = 0;
-let touchStartX = 0;
-document.addEventListener('touchstart', e => {
-  touchStartY = e.touches[0].clientY;
-  touchStartX = e.touches[0].clientX;
-}, { passive: true });
-document.addEventListener('touchend', e => {
-  const dy = touchStartY - e.changedTouches[0].clientY;
-  const dx = touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
-    goTo(currentIndex + (dy > 0 ? 1 : -1));
-  }
-}, { passive: true });
-
 /* ══════════════════════════════════════════
    ON SLIDE ENTER HOOKS
    ══════════════════════════════════════════ */
