@@ -13,6 +13,24 @@ let raf;
 
 export function enterSlide8() {
   cancelAnimationFrame(raf);
+
+  const cv = document.getElementById('pipeline-summary-canvas');
+  if (cv) {
+    const ctx = cv.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const logicalW = 720;
+    const logicalH = 240;
+
+    cv.width = logicalW * dpr;
+    cv.height = logicalH * dpr;
+    cv.style.width = '100%';
+    cv.style.maxWidth = `${logicalW}px`;
+    cv.style.height = 'auto';
+
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+  }
+
   drawStatic();
   animateDot();
   gsap.from('#slide-8 .summary-steps .sum-step', { y: 14, opacity: 0, duration: 0.4, stagger: 0.08 });
@@ -20,13 +38,13 @@ export function enterSlide8() {
 
 function getCtx() {
   const c = document.getElementById('pipeline-summary-canvas');
-  return c ? { ctx: c.getContext('2d'), W: c.width, H: c.height } : null;
+  return c ? { ctx: c.getContext('2d'), W: 720, H: 240 } : null;
 }
 
 function layout() {
   const cv = document.getElementById('pipeline-summary-canvas');
   if (!cv) return {};
-  const W = cv.width, H = cv.height;
+  const W = 720, H = 240;
   const padL = 30, padR = 30;
   const blockW = (W - padL - padR - (STEPS.length - 1) * 18) / STEPS.length;
   const blockH = 88;
@@ -68,17 +86,17 @@ function drawStatic() {
     // Step number
     const numBright = 35 + i * 8;
     ctx.fillStyle = `rgb(${numBright},${numBright},${numBright})`;
-    ctx.font = '700 22px Inter'; ctx.textAlign = 'center';
+    ctx.font = '700 23px Inter'; ctx.textAlign = 'center';
     ctx.fillText(`0${i + 1}`, x + blockW / 2, startY + 28);
 
     // Label
-    ctx.fillStyle = `rgba(255,255,255,${0.55 + i * 0.08})`;
-    ctx.font = '600 10px Inter';
+    ctx.fillStyle = `rgba(255,255,255,${0.65 + i * 0.08})`;
+    ctx.font = '600 11px Inter';
     ctx.fillText(step.label, x + blockW / 2, startY + 48);
 
     // Desc
-    ctx.fillStyle = '#444';
-    ctx.font = '9px Inter';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '10px Inter';
     ctx.fillText(step.desc, x + blockW / 2, startY + 64);
   });
 }

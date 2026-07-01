@@ -47,8 +47,23 @@ export function enterSlide6() {
   canvas = document.getElementById('backprop-canvas');
   if (!canvas) return;
   ctx = canvas.getContext('2d');
-  W   = canvas.width;
-  H   = canvas.height;
+
+  // Support High-DPI / Retina screens
+  const dpr = window.devicePixelRatio || 1;
+  const logicalW = 700;
+  const logicalH = 340;
+
+  canvas.width = logicalW * dpr;
+  canvas.height = logicalH * dpr;
+  canvas.style.width = '100%';
+  canvas.style.maxWidth = `${logicalW}px`;
+  canvas.style.height = 'auto';
+
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+
+  W = logicalW;
+  H = logicalH;
 
   computeLayout();
   resetState();
@@ -410,26 +425,26 @@ function drawNodes() {
       /* Activation value inside node */
       if (act > 0.25) {
         ctx.fillStyle = act > 0.6 ? '#000' : `rgba(255,255,255,${act * 0.8})`;
-        ctx.font      = `600 8px "JetBrains Mono"`;
+        ctx.font      = `600 9.5px "JetBrains Mono"`;
         ctx.textAlign = 'center';
-        ctx.fillText(act.toFixed(1), x, y + 3);
+        ctx.fillText(act.toFixed(1), x, y + 3.5);
       }
 
       /* Gradient annotation on backward pass */
       const gl = gradLabel[l][n];
       if (gl && (phase === 'backward' || phase === 'done')) {
         /* Small tag above the node */
-        const tagW = 82, tagH = 16;
+        const tagW = 86, tagH = 18;
         const tx = x - tagW / 2, ty = y - NODE_R - tagH - 5;
-        ctx.fillStyle   = 'rgba(30,30,30,0.9)';
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-        ctx.lineWidth   = 0.5;
+        ctx.fillStyle   = 'rgba(30,30,30,0.95)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.lineWidth   = 1;
         roundRect(ctx, tx, ty, tagW, tagH, 3);
         ctx.fill(); ctx.stroke();
-        ctx.fillStyle = 'rgba(200,200,200,0.85)';
-        ctx.font      = '7px "JetBrains Mono"';
+        ctx.fillStyle = 'rgba(220,220,220,0.95)';
+        ctx.font      = '8.5px "JetBrains Mono"';
         ctx.textAlign = 'center';
-        ctx.fillText(gl, x, ty + 11);
+        ctx.fillText(gl, x, ty + 12);
       }
     }
   }
@@ -442,19 +457,19 @@ function drawLayerLabels() {
     const act = Math.max(...activation[l]);
 
     /* Top label */
-    ctx.fillStyle = act > 0.3 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.25)';
-    ctx.font      = `600 11px Inter`;
+    ctx.fillStyle = act > 0.3 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)';
+    ctx.font      = `600 12px Inter`;
     ctx.textAlign = 'center';
     ctx.fillText(ld.label, x, 18);
 
     /* Sublabel */
-    ctx.fillStyle = act > 0.3 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)';
-    ctx.font      = '9px "JetBrains Mono"';
+    ctx.fillStyle = act > 0.3 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)';
+    ctx.font      = '10px "JetBrains Mono"';
     ctx.fillText(ld.sublabel, x, 32);
 
     /* Bottom: node count */
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.font      = '9px Inter';
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font      = '10px Inter';
     ctx.fillText(`${ld.nodes} nodes`, x, H - 10);
   });
 }
@@ -467,8 +482,8 @@ function showWeightUpdateOverlay() {
   ctx.strokeStyle = 'rgba(255,255,255,0.18)';
   ctx.lineWidth   = 1;
   ctx.fill(); ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
-  ctx.font      = '600 11px "JetBrains Mono"';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font      = '600 12px "JetBrains Mono"';
   ctx.textAlign = 'center';
   ctx.fillText('W  ←  W  −  α · ∂L/∂W      (learning rate α = 0.0001)', W / 2, bannerY + 18);
 }
